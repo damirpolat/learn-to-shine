@@ -41,8 +41,6 @@ server = function(input, output) {
     temp_vals$data = data.frame("mis1" = temp_vals$penalties1, "mis2" = temp_vals$penalties2)
   })
   
-  #scenario = reactive({ getCosealASScenario(input$scenario) })
-  
   output$plot1 = renderPlot({ 
     ggplot(temp_vals$data, aes(x = mis1, y = mis2)) + geom_point(color = 'red') + 
       geom_abline(intercept = 0, slope = 1, linetype = "dashed") + 
