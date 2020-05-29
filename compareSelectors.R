@@ -4,6 +4,8 @@ library(llama)
 library(aslib)
 library(ggplot2)
 
+library(plotly)
+
 # Define UI ----
 ui = fluidPage(
   titlePanel(strong("Comparing Selectors")),
@@ -18,7 +20,7 @@ ui = fluidPage(
                 placeholder = "ex. Random Forest", value = "regr.featureless"),
       actionButton("run", "Run!")
     ), 
-    column(6, plotOutput("plot1")), 
+    column(6, plotlyOutput("plot1")), 
     mainPanel()
   )
 )
@@ -54,18 +56,18 @@ server = function(input, output) {
   penalties1 = reactive(misclassificationPenalties(get_data(), temp_vals$selector1))
   penalties2 = reactive(misclassificationPenalties(get_data(), temp_vals$selector2))
   
-  data = reactive(data.frame("mis1" = penalties1(), "mis2" = penalties2()))
+  data = reactive(data.frame(mis1 = penalties1(), mis2 = penalties2()))
   temp_vals = reactiveValues()
   observe({
     temp_vals$selector1 = regression(learner1(), get_data())
     temp_vals$selector2 = regression(learner2(), get_data())
   })
   
-  output$plot1 = renderPlot({ 
+  output$plot1 = renderPlotly({ 
     
     ggplot(data = data(), aes(x = mis1, y = mis2)) + geom_point(color = 'red') + 
       geom_abline(intercept = 0, slope = 1, linetype = "dashed") + 
-      ggtitle("Misclassification Penalties of Two Selectors") + 
+      ggtitle("Misclassification Penalties") + 
       xlab(input$selector1) + ylab(input$selector2) +
       theme(plot.title = element_text(size = 15, hjust = 0.5))
   })
