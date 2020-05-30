@@ -5,6 +5,9 @@ library(aslib)
 library(ggplot2)
 library(scatterD3)
 
+set.seed(1L)
+
+# reference lines for scatter plot
 default_lines = data.frame(slope = c(0, Inf, 1), intercept = c(0, 0, 0), 
                 stroke_width = 1, stroke_dasharray = 5)
 
@@ -73,13 +76,12 @@ server = function(input, output) {
   output$plot1 = renderScatterD3({
     scatterD3(data = data(), x = x, y = y, tooltip_text = tooltip(),
       tooltip_position = "top right",
-      xlab = "regr.featureless", ylab = "regr.featureless",
+      xlab = input$selector1, ylab = input$selector2,
       point_size = 100, point_opacity = 0.5,
       colors = "purple",
       hover_size = 3, hover_opacity = 1,
       lines = lines(),
-      caption = list(text = paste("Misclassification Penalties for ", learner1()$id, 
-                                  " vs. ", learner2()$id),
+      caption = list(text = paste("Misclassification Penalties for ", input$selector1, " vs. ", input$selector2),
                      title = "Misclassification Penalties"))
   })
 }
