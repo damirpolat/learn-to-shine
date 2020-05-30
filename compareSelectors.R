@@ -3,7 +3,10 @@ library(mlr)
 library(llama)
 library(aslib)
 library(ggplot2)
-library(plotly)
+library(scatterD3)
+
+default_lines = data.frame(slope = c(0, Inf, 1), intercept = c(0, 0, 0), 
+                stroke_width = 1, stroke_dasharray = 5)
 
 # Define UI 
 ui = fluidPage(
@@ -11,15 +14,15 @@ ui = fluidPage(
   p("Compare algorithm selectors with ASlib scenarios"),
   fluidRow(
     column(3,
-      textInput("scenario", label = h3(strong("Type ASlib scenario")),
-                  placeholder = "ex. SAT11-INDU", value = "SAT11-INDU"),
-      textInput("selector1", label = h3(strong("Type selector name")),
-                placeholder = "ex. Random Forest", value = "regr.featureless"),
-      textInput("selector2", label = h3(strong("Type selector name")),
-                placeholder = "ex. Random Forest", value = "regr.featureless"),
-      actionButton("run", "Run!")
+           textInput("scenario", label = h3(strong("Type ASlib scenario")),
+                     placeholder = "ex. SAT11-INDU", value = "SAT11-INDU"),
+           textInput("selector1", label = h3(strong("Type selector name")),
+                     placeholder = "ex. Random Forest", value = "regr.featureless"),
+           textInput("selector2", label = h3(strong("Type selector name")),
+                     placeholder = "ex. Random Forest", value = "regr.featureless"),
+           actionButton("run", "Run!")
     ), 
-    column(6, plotlyOutput("plot1")), 
+    column(6, scatterD3Output("plot1")), 
     textOutput("name1"),
     mainPanel()
   )
@@ -28,16 +31,17 @@ ui = fluidPage(
 # Define server logic 
 server = function(input, output) {
   
+  lines = reactive({ default_lines })
   learner1 = eventReactive(input$run, {
     makeImputeWrapper(learner = setHyperPars(makeLearner(input$selector1)),
-                classes = list(numeric = imputeMean(), integer = imputeMean(), logical = imputeMode(),
-                factor = imputeConstant("NA"), character = imputeConstant("NA")))
+                      classes = list(numeric = imputeMean(), integer = imputeMean(), logical = imputeMode(),
+                                     factor = imputeConstant("NA"), character = imputeConstant("NA")))
   })
   
   learner2 = eventReactive(input$run, {
     makeImputeWrapper(learner = setHyperPars(makeLearner(input$selector2)),
-                classes = list(numeric = imputeMean(), integer = imputeMean(), logical = imputeMode(),
-                factor = imputeConstant("NA"), character = imputeConstant("NA")))
+                      classes = list(numeric = imputeMean(), integer = imputeMean(), logical = imputeMode(),
+                                     factor = imputeConstant("NA"), character = imputeConstant("NA")))
   })
   
   # function to load ASlib scenario
@@ -48,9 +52,6 @@ server = function(input, output) {
   # convert data into llama format
   get_data = reactive(trainTest(convertToLlama(load_scenario())))
   get_ids = reactive(get_data()$data[get_data()$test[[1]], get_data()$ids])
-  # build selectors 
-  #selector1 = reactive(regression(learner1, get_data()))
-  #selector2 = reactive(regression(learner2, get_data()))
   
   # compute misclassification penalties
   penalties1 = reactive(misclassificationPenalties(get_data(), temp_vals$selector1))
@@ -66,13 +67,20 @@ server = function(input, output) {
     temp_vals$selector2 = regression(learner2(), get_data())
   })
   
+  tooltip = reactive(paste("instance_id = ", data()$instance_id, "<br>x = ", 
+                           data()$x, "<br>y = ", data()$y))
   # make scatterplot with misclassification penalties
-  output$plot1 = renderPlotly({ 
-    ggplot(data = data(), aes(x = x, y = y, label = instance_id)) + geom_point(color = 'red') + 
-      geom_abline(intercept = 0, slope = 1, linetype = "dashed") + 
-      ggtitle("Misclassification Penalties") + 
-      xlab(input$selector1) + ylab(input$selector2) +
-      theme(plot.title = element_text(size = 15, hjust = 0.3))
+  output$plot1 = renderScatterD3({
+    scatterD3(data = data(), x = x, y = y, tooltip_text = tooltip(),
+      tooltip_position = "top right",
+      xlab = "regr.featureless", ylab = "regr.featureless",
+      point_size = 100, point_opacity = 0.5,
+      colors = "purple",
+      hover_size = 3, hover_opacity = 1,
+      lines = lines(),
+      caption = list(text = paste("Misclassification Penalties for ", learner1()$id, 
+                                  " vs. ", learner2()$id),
+                     title = "Misclassification Penalties"))
   })
 }
 
