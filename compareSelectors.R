@@ -3,7 +3,6 @@ library(mlr)
 library(llama)
 library(aslib)
 library(ggplot2)
-
 library(plotly)
 
 # Define UI 
@@ -41,14 +40,6 @@ server = function(input, output) {
                 factor = imputeConstant("NA"), character = imputeConstant("NA")))
   })
   
-  name1 = eventReactive(input$run, {
-    input$selector1
-  })
-  
-  name2 = eventReactive(input$run, {
-    input$selector2
-  })
-  
   # function to load ASlib scenario
   load_scenario = eventReactive(input$run, {
     getCosealASScenario(input$scenario)
@@ -67,12 +58,6 @@ server = function(input, output) {
   
   # create data for plot
   data = reactive(data.frame(instance_id = get_ids(), x = penalties1(), y = penalties2()))
-  #data = reactive(colnames(build_data()[2:3]) = c(name1(), name2()))
-  #data = reactive(
-  #  d = data.frame(ids = get_ids(), mis1 = penalties1(), mis2 = penalties2()),
-  #  colnames(d)[2:3] = c(name1(), name2())
-  #)
-  #colnames(data)[2:3] = c(name1(), name2())
   
   # might need to rewrite this
   temp_vals = reactiveValues()
