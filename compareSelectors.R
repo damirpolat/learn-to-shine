@@ -6,7 +6,7 @@ library(ggplot2)
 
 library(plotly)
 
-# Define UI ----
+# Define UI 
 ui = fluidPage(
   titlePanel(strong("Comparing Selectors")),
   p("Compare algorithm selectors with ASlib scenarios"),
@@ -21,11 +21,12 @@ ui = fluidPage(
       actionButton("run", "Run!")
     ), 
     column(6, plotlyOutput("plot1")), 
+    textOutput("name1"),
     mainPanel()
   )
 )
 
-# Define server logic ----
+# Define server logic 
 server = function(input, output) {
   
   learner1 = eventReactive(input$run, {
@@ -40,6 +41,14 @@ server = function(input, output) {
                 factor = imputeConstant("NA"), character = imputeConstant("NA")))
   })
   
+  name1 = eventReactive(input$run, {
+    input$selector1
+  })
+  
+  name2 = eventReactive(input$run, {
+    input$selector2
+  })
+  
   # function to load ASlib scenario
   load_scenario = eventReactive(input$run, {
     getCosealASScenario(input$scenario)
@@ -47,7 +56,7 @@ server = function(input, output) {
   
   # convert data into llama format
   get_data = reactive(trainTest(convertToLlama(load_scenario())))
-  
+  get_ids = reactive(get_data()$data[get_data()$test[[1]], get_data()$ids])
   # build selectors 
   #selector1 = reactive(regression(learner1, get_data()))
   #selector2 = reactive(regression(learner2, get_data()))
@@ -56,22 +65,31 @@ server = function(input, output) {
   penalties1 = reactive(misclassificationPenalties(get_data(), temp_vals$selector1))
   penalties2 = reactive(misclassificationPenalties(get_data(), temp_vals$selector2))
   
-  data = reactive(data.frame(mis1 = penalties1(), mis2 = penalties2()))
+  # create data for plot
+  data = reactive(data.frame(instance_id = get_ids(), x = penalties1(), y = penalties2()))
+  #data = reactive(colnames(build_data()[2:3]) = c(name1(), name2()))
+  #data = reactive(
+  #  d = data.frame(ids = get_ids(), mis1 = penalties1(), mis2 = penalties2()),
+  #  colnames(d)[2:3] = c(name1(), name2())
+  #)
+  #colnames(data)[2:3] = c(name1(), name2())
+  
+  # might need to rewrite this
   temp_vals = reactiveValues()
   observe({
     temp_vals$selector1 = regression(learner1(), get_data())
     temp_vals$selector2 = regression(learner2(), get_data())
   })
   
+  # make scatterplot with misclassification penalties
   output$plot1 = renderPlotly({ 
-    
-    ggplot(data = data(), aes(x = mis1, y = mis2)) + geom_point(color = 'red') + 
+    ggplot(data = data(), aes(x = x, y = y, label = instance_id)) + geom_point(color = 'red') + 
       geom_abline(intercept = 0, slope = 1, linetype = "dashed") + 
       ggtitle("Misclassification Penalties") + 
       xlab(input$selector1) + ylab(input$selector2) +
-      theme(plot.title = element_text(size = 15, hjust = 0.5))
+      theme(plot.title = element_text(size = 15, hjust = 0.3))
   })
 }
 
-# Run the app ----
+# Run the app 
 shinyApp(ui = ui, server = server)
