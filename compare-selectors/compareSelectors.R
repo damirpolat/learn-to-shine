@@ -1,9 +1,13 @@
+# compareSelectors.R
+# Damir Pulatov
+
 library(shiny)
 library(mlr)
 library(llama)
 library(aslib)
 library(ggplot2)
 library(scatterD3)
+source("./helpers.R")
 
 set.seed(1L)
 
@@ -25,7 +29,10 @@ ui = fluidPage(
                      placeholder = "ex. Random Forest", value = "regr.featureless"),
            actionButton("run", "Run!")
     ), 
-    column(9, offset = 1, scatterD3Output("plot1")), 
+    column(7, offset = 1, scatterD3Output("plot1")), 
+    column(2,
+           checkboxInput("mcp", "Misclassification Penalties", value = TRUE),
+           checkboxInput("par", "PAR10 Scores")),
     mainPanel()
   )
 )
@@ -55,12 +62,23 @@ server = function(input, output) {
   get_data = reactive(trainTest(convertToLlama(load_scenario())))
   get_ids = reactive(get_data()$data[get_data()$test[[1]], get_data()$ids])
   
-  # compute misclassification penalties
+  # compute metrics of interest
   penalties1 = reactive(misclassificationPenalties(get_data(), temp_vals$selector1))
   penalties2 = reactive(misclassificationPenalties(get_data(), temp_vals$selector2))
+  par1 = reactive(parscores(get_data(), temp_vals$selector1))
+  par2 = reactive(parscores(get_data(), temp_vals$selector2))
   
   # create data for plot
-  data = reactive(data.frame(instance_id = get_ids(), x = penalties1(), y = penalties2()))
+  data = reactive(
+    if(input$mcp & input$par) {
+      mcp_par(get_ids(), penalties1(), penalties2(), par1(), par2())
+    } else if (input$mcp) {
+      data.frame(instance_id = get_ids(), x = penalties1(), y = penalties2(), 
+                 method = "mcp")
+    } else if (input$par) {
+      data.frame(instance_id = get_ids(), x = par1(), y = par2(), method = "par")
+    }
+  )
   
   # might need to rewrite this
   temp_vals = reactiveValues()
@@ -77,7 +95,6 @@ server = function(input, output) {
       tooltip_position = "top right",
       xlab = input$selector1, ylab = input$selector2,
       point_size = 100, point_opacity = 0.5,
-      colors = "purple",
       hover_size = 3, hover_opacity = 1,
       lines = lines(),
       caption = list(text = paste("Misclassification Penalties for ", input$selector1, " vs. ", input$selector2),
