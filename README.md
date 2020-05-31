@@ -1,2 +1,2 @@
-Teaching myself RShiny from tutorials. 
-I'll be adding more exercises and sample projects as I learn more. 
+Teaching myself RShiny.
+Here I'll be storing my projects that doesn't deserve their own repositories yet. 
