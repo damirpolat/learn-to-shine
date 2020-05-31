@@ -50,9 +50,9 @@ server = function(input, output) {
   
   output$scenario_loader = renderUI({
     switch(input$scenario_location,
-           "ASlib" = textInput("scenario", label = h4(strong("Type ASlib scenario")),
-                               placeholder = "ex. SAT11-INDU", value = "SAT11-INDU"),
-           "Custom" = fileInput("scenario_upload", label = h4(strong("Choose scenario")))
+      "ASlib" = textInput("scenario", label = h4(strong("Type ASlib scenario")),
+                  placeholder = "ex. SAT11-INDU", value = "SAT11-INDU"),
+      "Custom" = fileInput("scenario_upload", label = h4(strong("Choose scenario")))
     )
   })
   
