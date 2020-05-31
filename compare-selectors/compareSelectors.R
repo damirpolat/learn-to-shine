@@ -31,8 +31,8 @@ ui = fluidPage(
     ), 
     column(7, offset = 1, scatterD3Output("plot1")), 
     column(2,
-           checkboxInput("mcp", "Misclassification Penalties", value = TRUE),
-           checkboxInput("par", "PAR10 Scores")),
+           selectInput("metric", "Select metric", choices = c("mcp", "par10"))
+           ),
     mainPanel()
   )
 )
@@ -73,15 +73,10 @@ server = function(input, output) {
   build_both = reactive(build_data(get_ids(), penalties1(), penalties2(), par1(), par2()))
   # create data for plot
   data = reactive(
-    if(input$mcp && input$par) {
-      build_both()
-    } else if (input$mcp) {
+    if (input$metric == "mcp") {
       build_mcp()
-      #data.frame(instance_id = get_ids(), x = penalties1(), y = penalties2(), 
-      #           method = "mcp")
-    } else if (input$par) {
+    } else if (input$metric == "par10") {
       build_par()
-      #data.frame(instance_id = get_ids(), x = par1(), y = par2(), method = "par")
     }
   )
   
@@ -94,6 +89,24 @@ server = function(input, output) {
   
   tooltip = reactive(paste("instance_id = ", data()$instance_id, "<br>x = ", 
                            data()$x, "<br>y = ", data()$y))
+  
+  # build info text
+  plot.text = reactive(
+    if(input$metric == "mcp") {
+      paste("Misclassification Penalties for ", input$selector1, " vs. ", input$selector2)
+    } else if (input$metric == "par10") {
+      paste("PAR10 Scores for ", input$selector1, " vs. ", input$selector2)
+    }
+  )
+  
+  title = reactive(
+    if(input$metric == "mcp") {
+      paste("Misclassification Penalties")
+    } else if (input$metric == "par10") {
+      paste("PAR10 Scores")
+    }
+  )
+  
   # make scatterplot with misclassification penalties
   output$plot1 = renderScatterD3({
     scatterD3(data = data(), x = x, y = y, tooltip_text = tooltip(),
@@ -101,9 +114,11 @@ server = function(input, output) {
       xlab = input$selector1, ylab = input$selector2,
       point_size = 100, point_opacity = 0.5,
       hover_size = 3, hover_opacity = 1,
+      color = "purple",
       lines = lines(),
-      caption = list(text = paste("Misclassification Penalties for ", input$selector1, " vs. ", input$selector2),
-                     title = "Misclassification Penalties"))
+      caption = list(text = plot.text(),
+                     title = title()),
+      transitions = TRUE)
   })
 }
 
