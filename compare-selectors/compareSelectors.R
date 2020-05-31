@@ -91,7 +91,7 @@ server = function(input, output) {
                            data()$x, "<br>y = ", data()$y))
   # make scatterplot with misclassification penalties
   output$plot1 = renderScatterD3({
-    scatterD3(data = data(), x = x, y = y, tooltip_text = tooltip(),
+    scatterD3(data = data(), x = x, y = y, col_var = method, tooltip_text = tooltip(),
       tooltip_position = "top right",
       xlab = input$selector1, ylab = input$selector2,
       point_size = 100, point_opacity = 0.5,

@@ -11,7 +11,7 @@ mcp_par = function(ids, penalties1, penalties2, par1, par2) {
   x = rbind(x_mcp, x_par)
   y = rbind(y_mcp, y_par)
   
-  data = data.frame(instance_id = ids)
+  data = data.frame(instance_id = rep(ids, 2))
   data = cbind.data.frame(data, x, y)
   return(data)
 }
