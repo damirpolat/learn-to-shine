@@ -9,25 +9,37 @@ set.seed(1L)
 
 # reference lines for scatter plot
 default_lines = data.frame(slope = c(0, Inf, 1), intercept = c(0, 0, 0), 
-                stroke_width = 1, stroke_dasharray = 5)
+                           stroke_width = 1, stroke_dasharray = 5)
 
 # Define UI 
 ui = fluidPage(
   titlePanel(strong("Comparing Selectors")),
   p("Compare algorithm selectors with ASlib scenarios"),
   fluidRow(
-    column(3,
+    column(2,
            textInput("scenario", label = h3(strong("Type ASlib scenario")),
                      placeholder = "ex. SAT11-INDU", value = "SAT11-INDU"),
-           textInput("selector1", label = h3(strong("Type selector name")),
+           textInput("selector1", label = h3(strong("Type learner name")),
                      placeholder = "ex. Random Forest", value = "regr.featureless"),
-           textInput("selector2", label = h3(strong("Type selector name")),
+           textInput("selector2", label = h3(strong("Type learner name")),
                      placeholder = "ex. Random Forest", value = "regr.featureless"),
            actionButton("run", "Run!")
     ), 
-    column(6, scatterD3Output("plot1")), 
-    textOutput("name1"),
-    mainPanel()
+    column(2, 
+           br(),
+           br(),
+           br(),
+           br(),
+           br(),
+           selectInput("method1", label = h3(strong("Methods")),
+                       c("Regression", "Pair Regression", "File Upload")),
+           selectInput("method2", label = h3(strong("Methods")),
+                       c("Regression", "Pair Regression", "File Upload"))
+    ),
+    column(8, scatterD3Output("plot1")), 
+    mainPanel(
+      #scatterD3Output("plot1")
+    )
   )
 )
 
@@ -75,14 +87,14 @@ server = function(input, output) {
   # make scatterplot with misclassification penalties
   output$plot1 = renderScatterD3({
     scatterD3(data = data(), x = x, y = y, tooltip_text = tooltip(),
-      tooltip_position = "top right",
-      xlab = input$selector1, ylab = input$selector2,
-      point_size = 100, point_opacity = 0.5,
-      colors = "purple",
-      hover_size = 3, hover_opacity = 1,
-      lines = lines(),
-      caption = list(text = paste("Misclassification Penalties for ", input$selector1, " vs. ", input$selector2),
-                     title = "Misclassification Penalties"))
+              tooltip_position = "top right",
+              xlab = input$selector1, ylab = input$selector2,
+              point_size = 100, point_opacity = 0.5,
+              colors = "purple",
+              hover_size = 3, hover_opacity = 1,
+              lines = lines(),
+              caption = list(text = paste("Misclassification Penalties for ", input$selector1, " vs. ", input$selector2),
+                             title = "Misclassification Penalties"))
   })
 }
 
