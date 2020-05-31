@@ -32,7 +32,7 @@ ui = fluidPage(
     column(7, offset = 1, scatterD3Output("plot1")), 
     column(2,
            selectInput("metric", "Select metric", choices = c("mcp", "par10")),
-           verbatimTextOutput("summary")
+           tableOutput("summary")
            ),
     mainPanel()
   )
@@ -104,9 +104,9 @@ server = function(input, output) {
   model2_gap_par = reactive(round(1 - (model2_par() - virtual_par()) / (single_par() - virtual_par()), 2))
   
   # build summary for mcp
-  output$summary = renderPrint({
+  output$summary = renderTable({
     temp_vals$summary
-  })
+  }, include.rownames = FALSE)
   
   # might need to rewrite this
   temp_vals = reactiveValues()
