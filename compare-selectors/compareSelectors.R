@@ -7,6 +7,7 @@ library(llama)
 library(aslib)
 library(purrr)
 library(scatterD3)
+library(shinyFiles)
 source("./helpers.R")
 
 set.seed(1L)
@@ -22,6 +23,7 @@ ui = fluidPage(
   fluidRow(
     column(2,
            uiOutput("scenario_loader"),
+           #verbatimTextOutput("dir", placeholder = TRUE),
            textInput("selector1", label = h4(strong("Type learner name")),
                      placeholder = "ex. Random Forest", value = "regr.featureless"),
            textInput("selector2", label = h4(strong("Type learner name")),
@@ -48,13 +50,43 @@ ui = fluidPage(
 # Define server logic 
 server = function(input, output) {
   
+  shinyDirChoose(
+    input,
+    'scenario_upload',
+    roots = c(home = '~'),
+    filetypes = c('', 'txt', 'arff', 'csv')
+  )
+  
+  # dynamic UI for selecting scenarios
   output$scenario_loader = renderUI({
     switch(input$scenario_location,
            "ASlib" = textInput("scenario", label = h4(strong("Type ASlib scenario")),
                                placeholder = "ex. SAT11-INDU", value = "SAT11-INDU"),
-           "Custom" = fileInput("scenario_upload", label = h4(strong("Choose scenario")))
+           "Custom" =  list(shinyDirButton("scenario_upload", label = "Upload scenario",
+                                              "Select directory with scenario"),
+                            verbatimTextOutput("scenario_dir", placeholder = TRUE))
     )
   })
+  
+  # set up default directory for printing
+  global = reactiveValues(datapath = getwd())
+  scenario_dir = reactive(input$scenario_upload)
+  output$scenario_dir = renderText({
+    global$datapath
+  })
+  
+  # print updated scenario directory
+  observeEvent(ignoreNULL = TRUE,
+               eventExpr = {
+                 input$scenario_upload
+               },
+               handlerExpr = {
+                 if (!"path" %in% names(scenario_dir())) return()
+                 home = normalizePath("~")
+                 global$datapath =
+                   file.path(home, paste(unlist(scenario_dir()$path[-1]), collapse = .Platform$file.sep))
+               }
+  )
   
   lines = reactive({ default_lines })
   learner1 = eventReactive(input$run, {
