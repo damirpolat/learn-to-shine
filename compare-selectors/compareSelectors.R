@@ -31,7 +31,8 @@ ui = fluidPage(
     ), 
     column(7, offset = 1, scatterD3Output("plot1")), 
     column(2,
-           selectInput("metric", "Select metric", choices = c("mcp", "par10"))
+           selectInput("metric", "Select metric", choices = c("mcp", "par10")),
+           verbatimTextOutput("summary")
            ),
     mainPanel()
   )
@@ -70,7 +71,6 @@ server = function(input, output) {
   
   build_mcp = reactive(build_data(get_ids(), penalties1(), penalties2(), par1 = NULL, par2 = NULL))
   build_par = reactive(build_data(get_ids(), penalties1 = NULL, penalties2 = NULL, par1(), par2()))
-  build_both = reactive(build_data(get_ids(), penalties1(), penalties2(), par1(), par2()))
   # create data for plot
   data = reactive(
     if (input$metric == "mcp") {
@@ -80,11 +80,50 @@ server = function(input, output) {
     }
   )
   
+  # compute mean mcp for each model
+  single_mcp = reactive(compute_metric(load_scenario(), get_data(), choice = "sbs", 
+                                       method = "mcp"))
+  virtual_mcp = reactive(compute_metric(load_scenario(), get_data(), choice = "vbs", 
+                                    method = "mcp"))
+  model1_mcp = reactive(mean(penalties1()))
+  model2_mcp = reactive(mean(penalties2()))
+  
+  # compute mean par10 for each model
+  single_par = reactive(compute_metric(load_scenario(), get_data(), choice = "sbs", 
+                                       method = "par10"))
+  virtual_par = reactive(compute_metric(load_scenario(), get_data(), choice = "vbs", 
+                                        method = "par10"))
+  model1_par = reactive(mean(par1()))
+  model2_par = reactive(mean(par2()))
+  
+  # compute gaps closed
+  model1_gap_mcp = reactive(round(1 - (model1_mcp() - virtual_mcp()) / (single_mcp() - virtual_mcp()), 2))
+  model2_gap_mcp = reactive(round(1 - (model2_mcp() - virtual_mcp()) / (single_mcp() - virtual_mcp()), 2))
+  
+  model1_gap_par = reactive(round(1 - (model1_par() - virtual_par()) / (single_par() - virtual_par()), 2))
+  model2_gap_par = reactive(round(1 - (model2_par() - virtual_par()) / (single_par() - virtual_par()), 2))
+  
+  # build summary for mcp
+  output$summary = renderPrint({
+    temp_vals$summary
+  })
+  
   # might need to rewrite this
   temp_vals = reactiveValues()
   observe({
     temp_vals$selector1 = regression(learner1(), get_data())
     temp_vals$selector2 = regression(learner2(), get_data())
+   
+    if(input$metric == "mcp") {
+      temp_vals$summary = data.frame("x" = model1_gap_mcp(), "y" = model2_gap_mcp())
+      #row.names(temp_vals$summary) = "Percentage Gap Closed"
+      #colnames(temp_vals$summary) = c("sbs", "vbs", paste(input$selector1), paste(input$selector2))
+      #temp_vals$summary = temp_vals$tmp
+      #temp_vals$summary[, input$selector1] = model1_mcp()
+    } else if (input$metric == "par10") {
+      temp_vals$summary = data.frame("x" = model1_gap_par(), "y" = model1_gap_par())
+    }
+
   })
   
   tooltip = reactive(paste("instance_id = ", data()$instance_id, "<br>x = ", 

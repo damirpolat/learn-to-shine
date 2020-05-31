@@ -1,6 +1,8 @@
 # helpers.R
 # Damir Pulatov
 
+library(llama)
+
 # build data for scatter plot
 build_data = function(ids, penalties1 = NULL, penalties2 = NULL, par1 = NULL, par2 = NULL) {
   # data for mcp 
@@ -31,4 +33,41 @@ build_data = function(ids, penalties1 = NULL, penalties2 = NULL, par1 = NULL, pa
   }
   
   return(data)
+}
+
+# compute mean mcp or gap closed
+compute_metric = function(scenario, llama.cv, choice, method) {
+  data = fixFeckingPresolve(scenario, llama.cv)
+  
+  if(method == "mcp") {
+    if(choice == "sbs") {
+      single = llama:::singleBest(llama.cv)
+      single = list(predictions = single)
+      attr(single, "hasPredictions") = TRUE
+      
+      val = mean(misclassificationPenalties(data, single))
+    } else if(choice == "vbs") {
+      vbs = llama:::vbs(llama.cv)
+      vbs = list(predictions = vbs)
+      attr(vbs, "hasPredictions") = TRUE
+      
+      val = mean(misclassificationPenalties(data, vbs))
+    } 
+  } else if(method == "par10") {
+    if(choice == "sbs") {
+      single = llama:::singleBest(llama.cv)
+      single = list(predictions = single)
+      attr(single, "hasPredictions") = TRUE
+      
+      val = mean(parscores(data, single))
+    } else if(choice == "vbs") {
+      vbs = llama:::vbs(llama.cv)
+      vbs = list(predictions = vbs)
+      attr(vbs, "hasPredictions") = TRUE
+      
+      val = mean(parscores(data, vbs))
+    } 
+  }
+  
+  return(val)
 }
