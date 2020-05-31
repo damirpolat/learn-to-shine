@@ -68,15 +68,20 @@ server = function(input, output) {
   par1 = reactive(parscores(get_data(), temp_vals$selector1))
   par2 = reactive(parscores(get_data(), temp_vals$selector2))
   
+  build_mcp = reactive(build_data(get_ids(), penalties1(), penalties2(), par1 = NULL, par2 = NULL))
+  build_par = reactive(build_data(get_ids(), penalties1 = NULL, penalties2 = NULL, par1(), par2()))
+  build_both = reactive(build_data(get_ids(), penalties1(), penalties2(), par1(), par2()))
   # create data for plot
   data = reactive(
-    if(input$mcp & input$par) {
-      mcp_par(get_ids(), penalties1(), penalties2(), par1(), par2())
+    if(input$mcp && input$par) {
+      build_both()
     } else if (input$mcp) {
-      data.frame(instance_id = get_ids(), x = penalties1(), y = penalties2(), 
-                 method = "mcp")
+      build_mcp()
+      #data.frame(instance_id = get_ids(), x = penalties1(), y = penalties2(), 
+      #           method = "mcp")
     } else if (input$par) {
-      data.frame(instance_id = get_ids(), x = par1(), y = par2(), method = "par")
+      build_par()
+      #data.frame(instance_id = get_ids(), x = par1(), y = par2(), method = "par")
     }
   )
   
@@ -91,7 +96,7 @@ server = function(input, output) {
                            data()$x, "<br>y = ", data()$y))
   # make scatterplot with misclassification penalties
   output$plot1 = renderScatterD3({
-    scatterD3(data = data(), x = x, y = y, col_var = method, tooltip_text = tooltip(),
+    scatterD3(data = data(), x = x, y = y, tooltip_text = tooltip(),
       tooltip_position = "top right",
       xlab = input$selector1, ylab = input$selector2,
       point_size = 100, point_opacity = 0.5,
