@@ -7,3 +7,4 @@ add virtual best and single best solver statistics to the plot. also add mean mc
 add more interesting theme
 add colorblind friendly colors
 maybe even remove par10 scores
+bug with not updating title and text for plot

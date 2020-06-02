@@ -85,3 +85,12 @@ read_scenario = function(switch, path = NULL, scenario_name = NULL) {
     return(parseASScenario(path))
   }
 }
+
+# make plot text
+make_text = function(metric, selector1, selector2) {
+  if(metric == "mcp") {
+    return(paste("Misclassification Penalties for ", selector1, " vs. ", selector2))
+  } else if (metric == "par10") {
+    return(paste("PAR10 Scores for ", selector1, " vs. ", selector2))
+  }
+}
