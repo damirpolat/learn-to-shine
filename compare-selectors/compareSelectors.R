@@ -31,7 +31,7 @@ ui = fluidPage(
            actionButton("run", "Run!")
     ), 
     column(1,
-           selectInput("scenario_location", label = h5(strong("Scenario source")),
+           selectInput("scenario_type", label = h5(strong("Scenario source")),
                        choices = c("ASlib", "Custom")),
            selectInput("selector1_source", label = h5(strong("Selector source")),
                        choices = c("mlr/llama", "Custom")),
@@ -59,7 +59,7 @@ server = function(input, output) {
   
   # dynamic UI for selecting scenarios
   output$scenario_loader = renderUI({
-    switch(input$scenario_location,
+    switch(input$scenario_type,
            "ASlib" = textInput("scenario", label = h4(strong("Type ASlib scenario")),
                                placeholder = "ex. SAT11-INDU", value = "SAT11-INDU"),
            "Custom" =  list(shinyDirButton("scenario_upload", label = "Upload scenario",
@@ -103,7 +103,7 @@ server = function(input, output) {
   
   # function to load ASlib scenario
   load_scenario = eventReactive(input$run, {
-    getCosealASScenario(input$scenario)
+    read_scenario(input$scenario_type, global$datapath, input$scenario)
   })
   
   # convert data into llama format

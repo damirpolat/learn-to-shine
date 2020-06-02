@@ -76,3 +76,12 @@ compute_metric = function(scenario, llama.cv, choice, method) {
 compute_gap =  function(model_val, vbs_val, sbs_val) {
   return(round(1 - (model_val - vbs_val) / (sbs_val - vbs_val), 2))
 }
+
+# wrapper for loading scenario
+read_scenario = function(switch, path = NULL, scenario_name = NULL) {
+  if(switch == "ASlib") {
+    return(getCosealASScenario(scenario_name))
+  } else if (switch == "Custom") {
+    return(parseASScenario(path))
+  }
+}
