@@ -1,5 +1,7 @@
 # compareSelectors.R
 # Damir Pulatov
+# cannot access selectInput of main app ui from within modules
+# need to split into more refined modules
 
 library(shiny)
 library(mlr)

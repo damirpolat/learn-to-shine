@@ -217,7 +217,7 @@ server = function(input, output) {
               lines = lines(),
               caption = list(text = plot.text(),
                              title = title()),
-              transitions = TRUE)
+              transitions = FALSE)
   })
 }
 
