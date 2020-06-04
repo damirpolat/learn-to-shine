@@ -177,23 +177,11 @@ server = function(input, output) {
                            data()$x, "<br>y = ", data()$y))
   
   make_par_title = reactive( paste("PAR10 Scores for ", input$selector1, " vs. ", input$selector2) )
-  #metric = reactive({ input$metric })
-  # build info text
-  caption = reactiveValues()
-  #caption$plot.text = reactive({
-  #  if(metric() == "mcp") {
-  #    paste("Misclassification Penalties for ", input$selector1, " vs. ", input$selector2)
-  #  } else if (metric() == "par10") {
-  #    #make_par_title()
-  #    paste("PAR10 Scores for ", input$selector1, " vs. ", input$selector2)
-  #  }
-  #})
   
   plot.text = reactive({
     if(input$metric == "mcp") {
       paste("Misclassification Penalties for ", input$selector1, " vs. ", input$selector2)
     } else if (input$metric == "par10") {
-      #make_par_title()
       paste("PAR10 Scores for ", input$selector1, " vs. ", input$selector2)
     }
   })
