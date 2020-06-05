@@ -10,59 +10,14 @@ library(aslib)
 library(purrr)
 library(scatterD3)
 library(shinyFiles)
-source("../helpers.R")
+source("./helpers.R")
+source("./modules.R")
 
 set.seed(1L)
 
 # reference lines for scatter plot
 default_lines = data.frame(slope = c(0, Inf, 1), intercept = c(0, 0, 0), 
                            stroke_width = 1, stroke_dasharray = 5)
-
-# I can put everything related to selecting and typing scenario into one module
-scenarioInput = function(id) {
-  ns = NS(id)
-  list(uiOutput(ns("scenario_loader")))
-}
-
-scenarioServer = function(input, output, session) {
-  shinyDirChoose(
-    input,
-    'scenario_upload',
-    roots = c(home = '~'),
-    filetypes = c('', 'txt', 'arff', 'csv')
-  )
-  
-  # dynamic UI for selecting scenarios
-  output$scenario_loader = renderUI({
-    switch(input$scenario_type,
-       "ASlib" = textInput("scenario", label = h4(strong("Type ASlib scenario")),
-                        placeholder = "ex. SAT11-INDU", value = "SAT11-INDU"),
-       "Custom" =  list(shinyDirButton("scenario_upload", label = "Upload scenario",
-                        "Select directory with scenario"),
-                        verbatimTextOutput("scenario_dir", placeholder = TRUE))
-    )
-  })
-  
-  # set up default directory for printing
-  global = reactiveValues(datapath = getwd())
-  scenario_dir = reactive(input$scenario_upload)
-  output$scenario_dir = renderText({
-    global$datapath
-  })
-  
-  # print updated scenario directory
-  observeEvent(ignoreNULL = TRUE,
-     eventExpr = {
-       input$scenario_upload
-     },
-     handlerExpr = {
-       if (!"path" %in% names(scenario_dir())) return()
-       home = normalizePath("~")
-       global$datapath =
-         file.path(home, paste(unlist(scenario_dir()$path[-1]), collapse = .Platform$file.sep))
-     }
-  )
-}
 
 
 # Define UI 
@@ -79,8 +34,9 @@ ui = fluidPage(
            actionButton("run", "Run!")
     ), 
     column(1,
-           selectInput("scenario_type", label = h5(strong("Scenario source")),
-                       choices = c("ASlib", "Custom")),
+           scenarioSourceUI("source"), 
+           #selectInput("scenario_type", label = h5(strong("Scenario source")),
+           #           choices = c("ASlib", "Custom")),
            selectInput("selector1_source", label = h5(strong("Selector source")),
                        choices = c("mlr/llama", "Custom")),
            selectInput("selector2_source", label = h5(strong("Selector source")),
@@ -98,7 +54,8 @@ ui = fluidPage(
 
 # Define server logic 
 server = function(input, output) {
-  callModule(scenarioServer, "scenario")
+  source = callModule(scenarioSourceServer, "source")
+  callModule(scenarioServer, "scenario", source = source)
   
   lines = reactive({ default_lines })
   learner1 = eventReactive(input$run, {
